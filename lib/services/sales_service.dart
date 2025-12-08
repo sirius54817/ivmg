@@ -66,10 +66,12 @@ class SalesService {
     return _firestore
         .collection('sales')
         .where('staffId', isEqualTo: staffId)
-        .orderBy('saleDate', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Sale.fromFirestore(doc)).toList();
+      // Sort in memory to avoid compound index requirement
+      final sales = snapshot.docs.map((doc) => Sale.fromFirestore(doc)).toList();
+      sales.sort((a, b) => b.saleDate.compareTo(a.saleDate));
+      return sales;
     });
   }
 }

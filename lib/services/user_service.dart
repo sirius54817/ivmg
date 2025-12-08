@@ -33,10 +33,12 @@ class UserService {
     return _firestore
         .collection('users')
         .where('createdBy', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList();
+      // Sort in memory instead of using compound index
+      final users = snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList();
+      users.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return users;
     });
   }
 

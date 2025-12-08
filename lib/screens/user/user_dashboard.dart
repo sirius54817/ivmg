@@ -28,6 +28,9 @@ class _UserDashboardState extends State<UserDashboard>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Refresh FAB label when tab changes
+    });
   }
 
   @override

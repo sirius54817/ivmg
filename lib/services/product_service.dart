@@ -64,10 +64,12 @@ class ProductService {
   Stream<List<Product>> getProducts() {
     return _firestore
         .collection('products')
-        .orderBy('name')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
+      // Sort in memory to avoid index requirement
+      final products = snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
+      products.sort((a, b) => a.name.compareTo(b.name));
+      return products;
     });
   }
 
@@ -76,10 +78,12 @@ class ProductService {
     return _firestore
         .collection('products')
         .where('category', isEqualTo: category.name)
-        .orderBy('name')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
+      // Sort in memory to avoid compound index requirement
+      final products = snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList();
+      products.sort((a, b) => a.name.compareTo(b.name));
+      return products;
     });
   }
 

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../services/auth_service.dart';
 import '../../services/product_service.dart';
 import '../../services/sales_service.dart';
+import '../../services/attendance_service.dart';
 import '../../models/product.dart';
 import '../../models/sale.dart';
+import '../../models/attendance.dart' as attendance_model;
 import '../login_screen.dart';
+import 'attendance_screen.dart';
 
 class StaffDashboard extends StatefulWidget {
   const StaffDashboard({super.key});
@@ -24,7 +28,7 @@ class _StaffDashboardState extends State<StaffDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -57,6 +61,7 @@ class _StaffDashboardState extends State<StaffDashboard>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
+            Tab(text: 'Attendance', icon: Icon(Icons.fingerprint)),
             Tab(text: 'Sell Product', icon: Icon(Icons.point_of_sale)),
             Tab(text: 'My Sales', icon: Icon(Icons.history)),
           ],
@@ -65,6 +70,7 @@ class _StaffDashboardState extends State<StaffDashboard>
       body: TabBarView(
         controller: _tabController,
         children: [
+          _AttendanceTab(authService: _authService),
           _SalesFormTab(),
           _MySalesTab(salesService: _salesService, authService: _authService),
         ],
@@ -89,7 +95,8 @@ class _SalesFormTabState extends State<_SalesFormTab> {
   final _salesService = SalesService();
 
   ProductCategory? _selectedCategory;
-  Product? _selectedProduct;
+  String? _selectedProductId; // Store product ID instead of Product object
+  Product? _selectedProduct; // Cache the actual product for display
   bool _isLoading = false;
 
   @override
@@ -150,6 +157,7 @@ class _SalesFormTabState extends State<_SalesFormTab> {
         _quantityController.text = '1';
         setState(() {
           _selectedCategory = null;
+          _selectedProductId = null;
           _selectedProduct = null;
         });
       }
@@ -263,6 +271,7 @@ class _SalesFormTabState extends State<_SalesFormTab> {
                       onChanged: (value) {
                         setState(() {
                           _selectedCategory = value;
+                          _selectedProductId = null;
                           _selectedProduct = null;
                         });
                       },
@@ -292,22 +301,27 @@ class _SalesFormTabState extends State<_SalesFormTab> {
                             return const Text('No products in this category');
                           }
 
-                          return DropdownButtonFormField<Product>(
-                            value: _selectedProduct,
+                          return DropdownButtonFormField<String>(
+                            value: _selectedProductId,
                             decoration: const InputDecoration(
                               labelText: 'Select Product',
                               prefixIcon: Icon(Icons.inventory_2),
                             ),
                             items: products.map((product) {
                               return DropdownMenuItem(
-                                value: product,
+                                value: product.id,
                                 child: Text(
                                   '${product.name} (Stock: ${product.stockCount})',
                                 ),
                               );
                             }).toList(),
                             onChanged: (value) {
-                              setState(() => _selectedProduct = value);
+                              setState(() {
+                                _selectedProductId = value;
+                                _selectedProduct = products.firstWhere(
+                                  (p) => p.id == value,
+                                );
+                              });
                             },
                             validator: (value) {
                               if (value == null) {
@@ -525,6 +539,139 @@ class _MySalesTab extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AttendanceTab extends StatelessWidget {
+  final AuthService authService;
+
+  const _AttendanceTab({required this.authService});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = authService.currentUser;
+    if (currentUser == null) {
+      return const Center(child: Text('Please log in'));
+    }
+
+    final attendanceService = AttendanceService();
+
+    return Column(
+      children: [
+        // Mark Attendance Button
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AttendanceScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.fingerprint),
+            label: const Text('Mark Attendance'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+        ),
+
+        // Attendance History
+        Expanded(
+          child: StreamBuilder<List<attendance_model.Attendance>>(
+            stream: attendanceService.getStaffAttendance(currentUser.uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final attendances = snapshot.data ?? [];
+
+              if (attendances.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.event_available,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No attendance records',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Mark your attendance to see records here',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: attendances.length,
+                itemBuilder: (context, index) {
+                  final attendance = attendances[index];
+                  final dateFormat = DateFormat('MMM dd, yyyy');
+                  final timeFormat = DateFormat('hh:mm a');
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: attendance.isWithinRange
+                            ? Colors.green
+                            : Colors.orange,
+                        child: Icon(
+                          attendance.isWithinRange
+                              ? Icons.check
+                              : Icons.warning,
+                          color: Colors.white,
+                        ),
+                      ),
+                      title: Text(dateFormat.format(attendance.checkInTime)),
+                      subtitle: Text(
+                        'Check-in: ${timeFormat.format(attendance.checkInTime)}',
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            attendance.isWithinRange ? 'Valid' : 'Out of Range',
+                            style: TextStyle(
+                              color: attendance.isWithinRange
+                                  ? Colors.green
+                                  : Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${attendance.latitude.toStringAsFixed(4)}, ${attendance.longitude.toStringAsFixed(4)}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
