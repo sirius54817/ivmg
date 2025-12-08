@@ -27,7 +27,7 @@ class _UserDashboardState extends State<UserDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       setState(() {}); // Refresh FAB label when tab changes
     });
@@ -90,6 +90,7 @@ class _UserDashboardState extends State<UserDashboard>
           tabs: const [
             Tab(text: 'Staff', icon: Icon(Icons.people)),
             Tab(text: 'Products', icon: Icon(Icons.inventory)),
+            Tab(text: 'Reports', icon: Icon(Icons.assessment)),
           ],
         ),
       ),
@@ -98,19 +99,22 @@ class _UserDashboardState extends State<UserDashboard>
         children: [
           _buildStaffTab(),
           _buildProductsTab(),
+          _buildReportsTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          if (_tabController.index == 0) {
-            _showCreateStaffDialog();
-          } else {
-            _showCreateProductDialog();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: Text(_tabController.index == 0 ? 'Add Staff' : 'Add Product'),
-      ),
+      floatingActionButton: _tabController.index == 2
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                if (_tabController.index == 0) {
+                  _showCreateStaffDialog();
+                } else {
+                  _showCreateProductDialog();
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: Text(_tabController.index == 0 ? 'Add Staff' : 'Add Product'),
+            ),
     );
   }
 
@@ -310,6 +314,125 @@ class _UserDashboardState extends State<UserDashboard>
           ],
         ),
         onTap: () => _showProductDetails(product),
+      ),
+    );
+  }
+
+  Widget _buildReportsTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Download Reports',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.people,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Staff Attendance Report',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Download attendance records for all staff',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // TODO: Implement attendance report download
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Attendance report download coming soon'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.download),
+                    label: const Text('Download Attendance Report'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.point_of_sale,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sales Report',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Download sales records and analytics',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // TODO: Implement sales report download
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Sales report download coming soon'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.download),
+                    label: const Text('Download Sales Report'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
