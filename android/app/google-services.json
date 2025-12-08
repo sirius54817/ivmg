@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "860436601508",
+    "project_id": "ivmg-eebef",
+    "storage_bucket": "ivmg-eebef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860436601508:android:af5cabdf3120f1abf0a431",
+        "android_client_info": {
+          "package_name": "com.example.inventory_management"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "860436601508-dummy.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDL1bgIl8qlWj-m3BFBSpRz2UUkZqQT3jM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
