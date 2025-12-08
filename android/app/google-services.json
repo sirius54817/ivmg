@@ -12,12 +12,7 @@
           "package_name": "com.example.inventory_management"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "860436601508-dummy.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyDL1bgIl8qlWj-m3BFBSpRz2UUkZqQT3jM"
